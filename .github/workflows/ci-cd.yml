@@ -1,0 +1,40 @@
+name: Build and Push Python App
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build and Push to ACR
+        run: |
+          az acr login --name acrabcreg2026test
+          
+          docker build . -t acrabcreg2026test.azurecr.io/backend:${{ github.sha }}
+          docker push acrabcreg2026test.azurecr.io/backend:${{ github.sha }}
+
+      - name: Update Manifest Repository
+        run: |
+          
+          git clone https://x-access-token:${{ secrets.MANIFEST_REPO_PAT }}@github.com/Ikayou/gitops-manifests.git
+          cd gitops-manifests
+          
+          # apps/backend/deployment.yaml 
+          sed -i "s|image: .*|image: acrabcreg2026test.azurecr.io/backend:${{ github.sha }}|g" apps/backend/deployment.yaml
+          
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Update image to ${{ github.sha }}"
+          git push origin main
