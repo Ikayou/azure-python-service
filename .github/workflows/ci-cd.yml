@@ -20,7 +20,7 @@ jobs:
         run: |
           az acr login --name acrabcreg2026test
           
-          docker build . -t acrabcreg2026test.azurecr.io/backend:${{ github.sha }}
+          docker build -t acrabcreg2026test.azurecr.io/backend:${{ github.sha }} ./backend
           docker push acrabcreg2026test.azurecr.io/backend:${{ github.sha }}
 
       - name: Update Manifest Repository
