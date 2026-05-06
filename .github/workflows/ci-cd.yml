@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
 
 jobs:
+  # job1: Docker image build and push to ACR
   build-and-push:
     runs-on: ubuntu-latest
     steps:
@@ -16,7 +17,7 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Build and Push to ACR
+      - name: Build Docker Image
         run: |
           docker build -t acrabcreg2026test.azurecr.io/backend:${{ github.sha }} ./backend
         
@@ -25,36 +26,53 @@ jobs:
         with:
           image-ref: 'acrabcreg2026test.azurecr.io/backend:${{ github.sha }}'
           format: 'table'
-          exit-code: '1' # wenn kritische oder hohe Schwachstellen gefunden werden, soll der Schritt fehlschlagen
+          exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
 
       - name: Push to ACR
-        if: success() # wenn scanner erfolgreich war, dann pushen
+        if: success()
         run: |
           az acr login --name acrabcreg2026test
           docker push acrabcreg2026test.azurecr.io/backend:${{ github.sha }}
 
-      - name: Update Manifest Repository
+  # Job2: Staging Umgebung aktualisieren
+  deploy-staging:
+    needs: build-and-push # wenn build-and-push erfolgreich ist, wird dieser Job ausgeführt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update Staging Manifest
         run: |
-          # 1. manifest repo clone
           git clone https://x-access-token:${{ secrets.MANIFEST_REPO_PAT }}@github.com/Ikayou/gitops-manifests.git
           cd gitops-manifests
-          
-          # 2. wechsel in das Verzeichnis, in dem die kustomization.yaml liegt
-          cd ./apps/backend/overlays/staging
-          
-          # 3. Kustomize Befehl zum Aktualisieren des Image-Tags ausführen
-          #  Beispiel: kustomize edit set image <image-name>=<new-image-tag>
-          kustomize edit set image acrabcreg2026test.azurecr.io/backend:${{ github.sha }}
-
-          cd ../production
-          kustomize edit set image acrabcreg2026test.azurecr.io/backend:${{ github.sha }}
-
-          # 4. Git Befehle zum Committen und Pushen der Änderungen ausführen
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          cd ./apps/backend/overlays/staging
+          kustomize edit set image acrabcreg2026test.azurecr.io/backend:${{ github.sha }}
+          
           git add .
           git commit -m "Update staging image to ${{ github.sha }}"
+          git push origin main
+
+  # Job3: Production Umgebung aktualisieren nach erfolgreichem Staging-Update
+  deploy-production:
+    needs: deploy-staging # Staging Aktualisierung muss erfolgreich sein, bevor Production aktualisiert wird
+    runs-on: ubuntu-latest
+    environment: production # Production-Umgebung in GitHub Actions
+    steps:
+      - name: Update Production Manifest
+        run: |
+          git clone https://x-access-token:${{ secrets.MANIFEST_REPO_PAT }}@github.com/Ikayou/gitops-manifests.git
+          cd gitops-manifests
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Production directory aktualisieren
+          cd ./apps/backend/overlays/production
+          kustomize edit set image acrabcreg2026test.azurecr.io/backend:${{ github.sha }}
+          
+          git add .
+          git commit -m "Update production image to ${{ github.sha }}"
           git push origin main
