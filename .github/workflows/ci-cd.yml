@@ -30,7 +30,7 @@ jobs:
           cd gitops-manifests
           
           # 2. wechsel in das Verzeichnis, in dem die kustomization.yaml liegt
-          cd apps/backend/overlays/staging
+          cd ./apps/backend/overlays/staging
           
           # 3. Kustomize Befehl zum Aktualisieren des Image-Tags ausführen
           #  Beispiel: kustomize edit set image <image-name>=<new-image-tag>
