@@ -25,16 +25,20 @@ jobs:
 
       - name: Update Manifest Repository
         run: |
-          
+          # 1. manifest repo clone
           git clone https://x-access-token:${{ secrets.MANIFEST_REPO_PAT }}@github.com/Ikayou/gitops-manifests.git
           cd gitops-manifests
           
-          # apps/backend/deployment.yaml 
-          sed -i "s|image: .*|image: acrabcreg2026test.azurecr.io/backend:${{ github.sha }}|g" apps/backend/deployment.yaml
+          # 2. wechsel in das Verzeichnis, in dem die kustomization.yaml liegt
+          cd apps/backend/overlays/staging
           
+          # 3. Kustomize Befehl zum Aktualisieren des Image-Tags ausführen
+          #  Beispiel: kustomize edit set image <image-name>=<new-image-tag>
+          kustomize edit set image acrabcreg2026test.azurecr.io/backend:${{ github.sha }}
           
+          # 4. Git Befehle zum Committen und Pushen der Änderungen ausführen
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "Update image to ${{ github.sha }}"
+          git commit -m "Update staging image to ${{ github.sha }}"
           git push origin main

@@ -8,7 +8,7 @@ Dieses Repository verwaltet den Quellcode für eine Flask-Anwendung, die auf Azu
   - `Dockerfile`: Definition für den Build des Azure Container Registry (ACR) Images
   - `requirements.txt`: Abhängigkeiten (z.B. Flask)
 - **.github/workflows/**: CI/CD Pipeline
-  - `deploy.yml`: Automatisiertes Docker-Build, Push zum ACR und Aktualisierung des Manifest-Repositorys
+  - `ci-cd.yml`: Automatisiertes Docker-Build, Push zum ACR und Aktualisierung des Manifest-Repositorys
 
 ## CI/CD Workflow
 1. Ein Push in den `main`-Branch löst die GitHub Actions aus.
