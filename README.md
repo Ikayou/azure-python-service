@@ -35,3 +35,16 @@ Damit die Pipeline erfolgreich läuft, müssen folgende GitHub Secrets konfiguri
 1. Ein Push in den `main`-Branch löst die GitHub Actions aus.
 2. Das Docker-Image wird erstellt und in die Azure Container Registry (ACR) gepusht.
 3. Der Image-Tag in der `deployment.yaml` im `gitops-manifests`-Repository wird automatisch auf die neueste Version aktualisiert.
+
+---
+
+### Sicherheitsautomatisierung mit Trivy
+Um die Integrität unserer Container zu gewährleisten, wurde der CI-Workflow um einen **Vulnerability Scanner (Trivy)** ergänzt.
+*   **Funktionsweise**: Bei jedem Build scannt Trivy das Docker-Image auf Sicherheitslücken in OS-Paketen und Python-Bibliotheken.
+*   **Gatekeeper-Funktion**: Gefundene Schwachstellen der Kategorien `CRITICAL` oder `HIGH` führen zum sofortigen Abbruch der Pipeline (`exit-code: 1`), um zu verhindern, dass unsichere Images in die ACR gelangen.
+
+### 🔍 Überprüfung der Infrastruktur
+Um die zentrale IP-Adresse des Gateways zu ermitteln, nutzen wir:
+```bash
+kubectl get svc -n ingress-basic
+```
