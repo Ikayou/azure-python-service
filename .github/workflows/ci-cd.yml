@@ -35,6 +35,9 @@ jobs:
           # 3. Kustomize Befehl zum Aktualisieren des Image-Tags ausführen
           #  Beispiel: kustomize edit set image <image-name>=<new-image-tag>
           kustomize edit set image acrabcreg2026test.azurecr.io/backend:${{ github.sha }}
+
+          cd ../production
+          kustomize edit set image acrabcreg2026test.azurecr.io/backend:${{ github.sha }}
           
           # 4. Git Befehle zum Committen und Pushen der Änderungen ausführen
           git config user.name "github-actions[bot]"
