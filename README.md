@@ -48,3 +48,40 @@ Um die zentrale IP-Adresse des Gateways zu ermitteln, nutzen wir:
 ```bash
 kubectl get svc -n ingress-basic
 ```
+---
+
+## DevSecOps: Erweitertes Monitoring & Security Hardening
+
+### 1. Umfassendes Security-Scanning (Trivy 2.0)
+
+Ich habe die Sicherheitsüberprüfung auf die gesamte Infrastruktur und den Lebenszyklus des Containers ausgeweitet.
+
+* **Full Repo Scan (IaC/FS)**: Das gesamte Repository wird auf Fehlkonfigurationen in Kubernetes-Manifesten und auf "Secrets" (Passwörter/Keys) gescannt, bevor ein Image gebaut wird.
+* **Image Hardening**: Durch die Aktualisierung der OS-Pakete (`apt-get upgrade` / `apk upgrade`) direkt im Dockerfile wurden alle kritischen Schwachstellen (z.B. in OpenSSL) eliminiert.
+* **Zero-Vulnerability Policy**: Die Pipeline ist so konfiguriert, dass sie bei Funden der Kategorie `HIGH` oder `CRITICAL` sofort abbricht. Wir haben erfolgreich alle **19 ursprünglichen Schwachstellen auf 0 reduziert**.
+
+### 2. Observability & Monitoring (Prometheus & Grafana)
+
+Zur Überwachung der Anwendungsperformance und der Cluster-Gesundheit wurde ein professioneller Monitoring-Stack implementiert.
+
+* **Prometheus**: Sammelt Echtzeit-Metriken von allen Pods und Nodes im AKS-Cluster.
+* **Grafana Dashboards**: Visualisierung der wichtigsten KPIs:
+* **CPU & Memory Usage**: Überwachung der Ressourcenauslastung zur Vermeidung von Out-of-Memory (OOM) Fehlern.
+* **Network Traffic**: Echtzeit-Visualisierung der Anfragen an `/staging` und `/prod`.
+
+
+* **Alertmanager**: Vorbereitung für automatische Benachrichtigungen bei Systemausfällen.
+
+### Aktualisierte Verzeichnisstruktur & Tools
+
+```text
+backend/
+├── Dockerfile          # Optimiert: OS-Security-Updates & minimaler Footprint
+└── requirements.txt    # Fixierte Versionen für sicherheitskritische Pakete
+
+Infrastructure Tools:
+- Helm (für die Installation von Monitoring-Apps)
+- kube-prometheus-stack (Prometheus, Grafana, Alertmanager)
+
+```
+---
